@@ -1,0 +1,54 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/5743355a-4da8-47b1-9c46-c16ca746389d')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/5743355a-4da8-47b1-9c46-c16ca746389d')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-09-01-preview",
+            "properties": {
+                "displayName": "User accounts who are Owners of large numbers of Teams",
+                "description": "User accounts who are Owners of large numbers of Teams",
+                "severity": "High",
+                "enabled": false,
+                "query": "// Adjust this value to change how many teams a user is made owner of before detecting\r\nlet max_owner_count = 3;\r\n// Change this value to adjust how larger timeframe the query is run over.\r\nlet high_owner_count = (OfficeActivity\r\n| where OfficeWorkload =~ \"MicrosoftTeams\" \r\n| where Operation =~ \"MemberRoleChanged\" \r\n| extend Member = tostring(parse_json(Members)[0].UPN)\r\n| extend NewRole = toint(parse_json(Members)[0].Role)\r\n| where NewRole == 2\r\n| summarize dcount(TeamName) by Member\r\n| where dcount_TeamName > max_owner_count\r\n| project Member);\r\nOfficeActivity\r\n| where OfficeWorkload =~ \"MicrosoftTeams\" \r\n| where Operation =~ \"MemberRoleChanged\" \r\n| extend Member = tostring(parse_json(Members)[0].UPN)\r\n| extend NewRole = toint(parse_json(Members)[0].Role)\r\n| where NewRole == 2\r\n| where Member in (high_owner_count)\r\n| extend timestamp = TimeGenerated, AccountCustomEntity = Member",
+                "queryFrequency": "PT1H",
+                "queryPeriod": "P5D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "Exfiltration",
+                    "PrivilegeEscalation"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": false,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT5H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": null,
+                        "groupByCustomDetails": null
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": null
+            }
+        }
+    ]
+}
