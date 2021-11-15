@@ -1,0 +1,34 @@
+id: 9eb64924-ec8d-44d0-b1f2-10665150fb74
+name: Bots added to multiple teams
+description: |
+  'This hunting query identifies where Bots have been added to multiple Teams in a short timeframe.'
+requiredDataConnectors:
+  - connectorId: Office365
+    dataTypes:
+      - OfficeActivity (Teams)
+tactics:
+  - Persistence
+  - Collection
+severity: High
+relevantTechniques:
+  - T1176
+  - T1119
+query: |
+  // Adjust these thresholds to suit your environment.
+  let threshold = 2;
+  let time_threshold = timespan(5m);
+  let timeframe = 30d;
+  OfficeActivity
+  | where TimeGenerated > ago(timeframe)
+  | where OfficeWorkload =~ "MicrosoftTeams"
+  | where Operation =~ "BotAddedToTeam"
+  | summarize Start=max(TimeGenerated), End=min(TimeGenerated), Teams = makeset(TeamName)
+  | extend CountOfTeams = array_length(Teams)
+  | extend TimeDelta = End - Start 
+  | where CountOfTeams > threshold
+  | where TimeDelta >= time_threshold
+  | project Start, End, Teams, CountOfTeams
+queryFrequency: 2H
+queryPeriod: 7H
+triggerOperator: GreaterThan
+triggerThreshold: 3
