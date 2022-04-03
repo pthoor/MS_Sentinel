@@ -14,7 +14,7 @@
             "kind": "Scheduled",
             "apiVersion": "2021-09-01-preview",
             "properties": {
-                "displayName": "User accounts who are Owners of large numbers of Teams",
+                "displayName": "User accounts who are Owners of large numbers of Teams New",
                 "description": "User accounts who are Owners of large numbers of Teams",
                 "severity": "High",
                 "enabled": false,
