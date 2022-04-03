@@ -1,11 +1,11 @@
-name: Deploy Content to thoorsentinel [34314396-a487-44e7-8abd-37b1be1e3c88]
+name: Deploy Content to thoorsentinel [0e2bc7a2-9269-4bcc-be9a-c574f49e6023]
 # Note: This workflow will deploy everything in the root directory.
 # To deploy content only from a specific path (for example SentinelContent):
 #   1. Add the target path to the "paths" property like such
 #    paths:
 #    - 'SentinelContent/**'
 #    - '!.github/workflows/**'
-#    - '.github/workflows/sentinel-deploy-34314396-a487-44e7-8abd-37b1be1e3c88.yml'
+#    - '.github/workflows/sentinel-deploy-0e2bc7a2-9269-4bcc-be9a-c574f49e6023.yml'
 #   2. Append the path to the directory environment variable below
 #       directory: '${{ github.workspace }}/SentinelContent'
 
@@ -13,20 +13,24 @@ on:
   push:
     branches: [ main ]
     paths:
-    - '**.json'
+    - '**'
     - '!.github/workflows/**'  # this filter prevents other workflow changes from triggering this workflow
-    - '.github/workflows/sentinel-deploy-34314396-a487-44e7-8abd-37b1be1e3c88.yml'
+    - '.github/workflows/sentinel-deploy-0e2bc7a2-9269-4bcc-be9a-c574f49e6023.yml'
 
 jobs:
   deploy-content:
     runs-on: windows-latest
     env:
-      resourceGroupName: 'sentinel'
+      resourceGroupName: 'rg-sentinel'
       workspaceName: 'thoorsentinel'
       directory: '${{ github.workspace }}'
       cloudEnv: 'AzureCloud'
-      creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_34314396a48744e78abd37b1be1e3c88 }}
-      contentTypes: 'Workbook,Playbook,Parser,HuntingQuery,AutomationRule,AnalyticsRule'
+      creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_0e2bc7a292694bccbe9ac574f49e6023 }}
+      contentTypes: 'AnalyticsRule,AutomationRule,HuntingQuery,Parser,Playbook,Workbook'
+      branch: 'main'
+      sourceControlId: '0e2bc7a2-9269-4bcc-be9a-c574f49e6023'
+      githubAuthToken: ${{ secrets.GITHUB_TOKEN }}
+      smartDeployment: 'true'
 
     steps:
     - name: Login to Azure (Attempt 1)
@@ -35,14 +39,12 @@ jobs:
       uses: azure/login@v1
       if: ${{ env.cloudEnv == 'AzureCloud' }}
       with:
-        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_34314396a48744e78abd37b1be1e3c88 }}
+        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_0e2bc7a292694bccbe9ac574f49e6023 }}
         enable-AzPSSession: true
 
     - name: Wait 30 seconds if login attempt 1 failed
-      uses: juliangruber/sleep-action@v1
       if: ${{ env.cloudEnv == 'AzureCloud' && steps.login1.outcome=='failure' }}
-      with:
-        time: 30s
+      run: powershell Start-Sleep -s 30
     
     - name: Login to Azure (Attempt 2)
       continue-on-error: true
@@ -50,14 +52,12 @@ jobs:
       uses: azure/login@v1
       if: ${{ env.cloudEnv == 'AzureCloud' && steps.login1.outcome=='failure' }}
       with:
-        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_34314396a48744e78abd37b1be1e3c88 }}
+        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_0e2bc7a292694bccbe9ac574f49e6023 }}
         enable-AzPSSession: true
 
     - name: Wait 30 seconds if login attempt 2 failed
-      uses: juliangruber/sleep-action@v1
       if: ${{ env.cloudEnv == 'AzureCloud' && steps.login2.outcome=='failure' }}
-      with:
-        time: 30s
+      run: powershell Start-Sleep -s 30
     
     - name: Login to Azure (Attempt 3)
       continue-on-error: false
@@ -65,21 +65,15 @@ jobs:
       uses: azure/login@v1
       if: ${{ env.cloudEnv == 'AzureCloud' && steps.login2.outcome=='failure'  }}
       with:
-        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_34314396a48744e78abd37b1be1e3c88 }}
+        creds: ${{ secrets.AZURE_SENTINEL_CREDENTIALS_0e2bc7a292694bccbe9ac574f49e6023 }}
         enable-AzPSSession: true
 
     - name: Checkout
       uses: actions/checkout@v1
-
-    - name: Read deployment script
-      id: deploymentScript
-      uses: juliangruber/read-file-action@v1
-      with:
-        path: '${{ github.workspace }}/.github/workflows/azure-sentinel-deploy.ps1'
     
     - name: Deploy Content to Azure Sentinel
       uses: azure/powershell@v1
       with:
         azPSVersion: 'latest'
         inlineScript: |
-          ${{ steps.deploymentScript.outputs.content }}
+          ${{ github.workspace }}//.github/workflows/azure-sentinel-deploy-0e2bc7a2-9269-4bcc-be9a-c574f49e6023.ps1
